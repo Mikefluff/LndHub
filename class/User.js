@@ -14,26 +14,11 @@ export class User {
     this._bitcoindrpc = bitcoindrpc;
     this._lightning = lightning;
     this._userid = false;
-    this._login = false;
-    this._password = false;
     this._balance = 0;
   }
 
   getUserId() {
     return this._userid;
-  }
-
-  getLogin() {
-    return this._login;
-  }
-  getPassword() {
-    return this._password;
-  }
-  getAccessToken() {
-    return this._acess_token;
-  }
-  getRefreshToken() {
-    return this._refresh_token;
   }
 
   async loadByAuthorization(authorization) {
@@ -59,18 +44,10 @@ export class User {
 
     return false;
   }
+//req.tokenData.userId
+  async create(userId) {
 
-  async create() {
-    let buffer = crypto.randomBytes(10);
-    let login = buffer.toString('hex');
-
-    buffer = crypto.randomBytes(10);
-    let password = buffer.toString('hex');
-
-    buffer = crypto.randomBytes(24);
     let userid = buffer.toString('hex');
-    this._login = login;
-    this._password = password;
     this._userid = userid;
     await this._saveUserToDatabase();
   }
@@ -79,14 +56,11 @@ export class User {
     return await this._redis.set('metadata_for_' + this._userid, JSON.stringify(metadata));
   }
 
-  async loadByLoginAndPassword(login, password) {
-    let userid = await this._redis.get('user_' + login + '_' + this._hash(password));
+  async loadByUserId(userId) {
+    let userid = await this._redis.get('user_' + userId);
 
     if (userid) {
       this._userid = userid;
-      this._login = login;
-      this._password = password;
-      await this._generateTokens();
       return true;
     }
     return false;
@@ -340,22 +314,9 @@ export class User {
     return result;
   }
 
-  async _generateTokens() {
-    let buffer = crypto.randomBytes(20);
-    this._acess_token = buffer.toString('hex');
-
-    buffer = crypto.randomBytes(20);
-    this._refresh_token = buffer.toString('hex');
-
-    await this._redis.set('userid_for_' + this._acess_token, this._userid);
-    await this._redis.set('userid_for_' + this._refresh_token, this._userid);
-    await this._redis.set('access_token_for_' + this._userid, this._acess_token);
-    await this._redis.set('refresh_token_for_' + this._userid, this._refresh_token);
-  }
-
   async _saveUserToDatabase() {
     let key;
-    await this._redis.set((key = 'user_' + this._login + '_' + this._hash(this._password)), this._userid);
+    await this._redis.set((key = 'user_' + this._userid, this._userid);
   }
 
   /**

@@ -58,36 +58,33 @@ router.post('/create', async function(req, res) {
   if (!(req.body.partnerid && req.body.partnerid === 'bluewallet' && req.body.accounttype)) return errorBadArguments(res);
 
   let u = new User(redis, bitcoinclient, lightning);
-  await u.create();
+  await u.create(req.tokenData.userId);
   await u.saveMetadata({ partnerid: req.body.partnerid, accounttype: req.body.accounttype, created_at: new Date().toISOString() });
-  res.send({ login: u.getLogin(), password: u.getPassword() });
+  res.send({ user: u.getUserId() });
 });
 
 router.post('/auth', async function(req, res) {
   logger.log('/auth', [req.id]);
-  if (!((req.body.login && req.body.password) || req.body.refresh_token)) return errorBadArguments(res);
 
   let u = new User(redis, bitcoinclient, lightning);
 
-  if (req.body.refresh_token) {
+  if (req.tokenData.userId) {
     // need to refresh token
-    if (await u.loadByRefreshToken(req.body.refresh_token)) {
-      res.send({ refresh_token: u.getRefreshToken(), access_token: u.getAccessToken() });
+    if (await u.loadByUserId(req.tokenData.userId)) {
+      res.send({ user: u.getUserId() });
     } else {
       return errorBadAuth(res);
     }
   } else {
     // need to authorize user
-    let result = await u.loadByLoginAndPassword(req.body.login, req.body.password);
-    if (result) res.send({ refresh_token: u.getRefreshToken(), access_token: u.getAccessToken() });
-    else errorBadAuth(res);
+    errorBadAuth(res);
   }
 });
 
 router.post('/addinvoice', async function(req, res) {
   logger.log('/addinvoice', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
@@ -105,7 +102,7 @@ router.post('/addinvoice', async function(req, res) {
 
 router.post('/payinvoice', async function(req, res) {
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
@@ -228,7 +225,7 @@ router.post('/payinvoice', async function(req, res) {
 router.get('/getbtc', async function(req, res) {
   logger.log('/getbtc', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  await u.loadByAuthorization(req.headers.authorization);
+  await u.loadByUserId(req.tokenData.userId);
 
   if (!u.getUserId()) {
     return errorBadAuth(res);
@@ -246,7 +243,7 @@ router.get('/getbtc', async function(req, res) {
 router.get('/balance', async function(req, res) {
   logger.log('/balance', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
@@ -260,7 +257,7 @@ router.get('/balance', async function(req, res) {
 router.get('/getinfo', async function(req, res) {
   logger.log('/getinfo', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
@@ -273,7 +270,7 @@ router.get('/getinfo', async function(req, res) {
 router.get('/gettxs', async function(req, res) {
   logger.log('/gettxs', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
@@ -291,7 +288,7 @@ router.get('/gettxs', async function(req, res) {
 router.get('/getuserinvoices', async function(req, res) {
   logger.log('/getuserinvoices', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
@@ -311,7 +308,7 @@ router.get('/getuserinvoices', async function(req, res) {
 router.get('/getpending', async function(req, res) {
   logger.log('/getpending', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
@@ -324,7 +321,7 @@ router.get('/getpending', async function(req, res) {
 router.get('/decodeinvoice', async function(req, res) {
   logger.log('/decodeinvoice', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
@@ -339,7 +336,7 @@ router.get('/decodeinvoice', async function(req, res) {
 router.get('/checkrouteinvoice', async function(req, res) {
   logger.log('/checkrouteinvoice', [req.id]);
   let u = new User(redis, bitcoinclient, lightning);
-  if (!(await u.loadByAuthorization(req.headers.authorization))) {
+  if (!(await u.loadByUserId(req.tokenData.userId))) {
     return errorBadAuth(res);
   }
 
