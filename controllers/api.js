@@ -1,6 +1,9 @@
 import { User, Lock } from '../class/';
 const config = require('../config');
 let express = require('express');
+const lib = require('middleware_auth_lib')
+const auth = lib.authMiddleware(config.auth)
+express.use(auth)
 let router = express.Router();
 let logger = require('../utils/logger');
 console.log('using config', JSON.stringify(config));

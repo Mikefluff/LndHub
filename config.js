@@ -13,6 +13,10 @@ let config = {
     url: '1.1.1.1:10009',
     password: '',
   },
+  auth = {
+    serviceId: 'lightning-service',
+    provider: 'http://localhost:8082'
+  },	
 };
 
 if (process.env.CONFIG) {
